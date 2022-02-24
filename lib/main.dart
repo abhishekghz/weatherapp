@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:weatherapp/model/weather_model.dart';
+import 'package:weatherapp/services/weather_api_client.dart';
+import 'package:weatherapp/views/additional_information.dart';
+import 'package:weatherapp/views/current_weather.dart';
 
 void main() {
   runApp(MyApp());
@@ -22,6 +26,17 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  //Now we'll call the API
+  WeatherApiClient client = WeatherApiClient();
+  Weather? data;
+
+  Future<void> getData() async {
+
+    // Try Changing city
+
+    data = await client.getCurrentWeather("London");
+  }
+
   @override
   Widget build(BuildContext context) {
     //create UI of App
@@ -40,12 +55,48 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.menu),
             color: Colors.black,
           ),
-        ));
-    body: Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        //Let's Create custom widgets
-      ],
+        ),
+        body: FutureBuilder(
+          future: getData(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done){
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  currentWeather(Icons.wb_sunny_rounded, "${data!.temp}°",
+                      "${data!.cityName}"),
+                  SizedBox(
+                    height: 60.0,
+                  ),
+                  Text(
+                    "Additional Information",
+                    style: TextStyle(
+                      fontSize: 24.0,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Divider(),
+                  SizedBox(
+                    height: 20.0,
+                  ),
+                  additionalInformation("${data!.wind}",
+                      "${data!.humidity}",
+                      "${data!.pressure}",
+                      "${data!.feels_like}")
+
+                  // Now We are ready with API
+
+                ],
+              );
+            }else if(snapshot.connectionState==ConnectionState.waiting){
+              return Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+            return Container();
+          },
+        )
     );
   }
 }
